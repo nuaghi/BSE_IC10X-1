@@ -73,6 +73,59 @@ def plotSingle(xdata,ydata,scale,xl,yl,weights2,ptitle,fname,htmlFolderLocation)
     plotFileNameList.append(fname)
     print(nowtime()+"Plot"+fname)
 
+def plotSingleAgeMassDonor(data,ptitle,fname,htmlFolderLocation):
+    dataLength=len(data)
+    if dataLength > 0:
+        plt.hist2d(data["t1"],data["mx2"],bins=25,density=50,weights=data["ndt"],norm=LogNorm())
+        plt.colorbar()
+        plt.xlabel(r"$\mathit{Age}}$[Myrs]")
+        plt.ylabel(r"$\mathit{M_{d,ini}}$[${M_{sun}}$]")
+        lenListSetDataI=len(list(set(data["i"])))
+        DataNdt=list(data["ndt"])
+        listDataNdt=[sum(DataNdt),min(DataNdt),max(DataNdt)]
+        plt.title(ptitle+" ["+str(dataLength)+"->"+str(lenListSetDataI)+"]\nN: Total: "+str(round(listDataNdt[0],4))+" Section: ["+str(round(listDataNdt[1],4))+" , "+str(round(listDataNdt[2],4))+"], Average: "+str(round(listDataNdt[0]/lenListSetDataI,4)))
+        plt.savefig(htmlFolderLocation+fname)
+        plt.close()
+        plotFileNameList.append(fname)
+        print(nowtime()+"Plot: "+fname)
+    else:
+        print(nowtime()+"[WARNING] Empty Data: "+fname)
+        plt.hist2d([0],[0],bins=25,density=50,weights=[1],norm=LogNorm())
+        plt.xlabel(r"$\mathit{Age}}$[Myrs]")
+        plt.ylabel(r"$\mathit{M_{d,ini}}$[${M_{sun}}$]")
+        plt.title(ptitle+" [0]")
+        plt.savefig(htmlFolderLocation+fname)
+        plt.close()
+        plotFileNameList.append(fname)
+    del data
+
+def plotSingleMassDonorLogPeriod(data,ptitle,fname,htmlFolderLocation):
+    data=data[data["tbx"]>0]
+    dataLength=len(data)
+    if dataLength > 0:
+        plt.hist2d(data["mx2"],data["tbx"].apply(lambda x:math.log10(x)),bins=25,density=50,weights=data["ndt"],norm=LogNorm())
+        plt.colorbar()
+        plt.xlabel(r"$\mathit{M_{donor}}$[${M_{sun}}$]")
+        plt.ylabel(r"$\mathit{log P_{orb,cur}}$[d]")
+        lenListSetDataI=len(list(set(data["i"])))
+        DataNdt=list(data["ndt"])
+        listDataNdt=[sum(DataNdt),min(DataNdt),max(DataNdt)]
+        plt.title(r"$\mathit{Mass - log(Period)}$"+ptitle+" ["+str(dataLength)+"->"+str(lenListSetDataI)+"]\nN: Total: "+str(round(listDataNdt[0],4))+" Section: ["+str(round(listDataNdt[1],4))+" , "+str(round(listDataNdt[2],4))+"], Average: "+str(round(listDataNdt[0]/lenListSetDataI,4)))
+        plt.savefig(htmlFolderLocation+fname)
+        plt.close()
+        plotFileNameList.append(fname)
+        print(nowtime()+"Plot: "+fname)
+    else:
+        print(nowtime()+"[WARNING] Empty Data: "+fname)
+        plt.hist2d([0],[0],bins=25,density=50,weights=[1],norm=LogNorm())
+        plt.xlabel(r"$\mathit{M_{donor}}$[${M_{sun}}$]")
+        plt.ylabel(r"$\mathit{log P_{orb,cur}}$[d]")
+        plt.title(ptitle+" [0]")
+        plt.savefig(htmlFolderLocation+fname)
+        plt.close()
+        plotFileNameList.append(fname)
+    del data
+
 def plotDistribution(xdata,weights,label,range,title,xlabel,ylabel,htmlFolderLocation):
     plt.hist(xdata, bins=100,histtype='step',weights=weights, color='tomato', linewidth=1.5,label=label,range=range)
     plt.title(title)
@@ -83,21 +136,58 @@ def plotDistribution(xdata,weights,label,range,title,xlabel,ylabel,htmlFolderLoc
     plotFileNameList.append(title)
 
 def plotMain(data,htmlFolderLocation):
-    plotSingle(data["t1"], data["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data["ndt"], "Age - Mass, dataset: All", "2-AgeMassAllWeight",htmlFolderLocation)
-    plotSingle(data[data["tbx"]>0]["mx2"], data[data["tbx"]>0]["tbx"].apply(lambda x:math.log10(x)), 0, r"$\mathit{M_{donor}}$[${M_{sun}}$]", r"$\mathit{log P_{orb,cur}}$[d]", data[data["tbx"]>0]["ndt"], r"$\mathit{Mass - log(Period), dataset: All}$", "8-MasslgPeriodWeight",htmlFolderLocation)
-    plotSingle(data[data["kw"]==13]["t1"], data[data["kw"]==13]["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[data["kw"]==13]["ndt"],r"$\mathit{Age - Mass, dataset: NS}$", "4-AgeMassNSWeight",htmlFolderLocation)
-    plotSingle(data[data["kw"]==14]["t1"], data[data["kw"]==14]["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[data["kw"]==14]["ndt"],r"$\mathit{Age - Mass, dataset: BH}$", "6-AgeMassBHWeight",htmlFolderLocation)
-    # plotSingle(data[(data["mx2"]>=2)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=2)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]",data[(data["mx2"]>=i)&(data["kw"]==13)]["ndt"],r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
-    # plotSingle(data[(data["mx2"]>=2)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=2)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=2)&(data["kw"]==13)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>=2${M_{sun}},NS$","AgeMassGT2WeightNS",htmlFolderLocation)
-    # i=2
-    # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==13)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
+    Num=1
+    plotSingleAgeMassDonor(data, "Age - Mass, dataset: All", str(Num)+"-AgeMassAllWeight",htmlFolderLocation)
+    Num+=1
+    plotSingleAgeMassDonor(data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "Age - Mass, dataset: N>=10^-8 tbx>=10^-6d", str(Num)+"-AgeMassReasonableWeight",htmlFolderLocation)
+    Num+=1
+    plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "Age - Mass, dataset: N>=10^-8 tbx>=10^-6d, NS", str(Num)+"-AgeMassReasonableNSWeight",htmlFolderLocation)
+    Num+=1
+    plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "Age - Mass, dataset: N>=10^-8 tbx>=10^-6d, BH", str(Num)+"-AgeMassReasonableRBHWeight",htmlFolderLocation)
+    for i in [2,5,10]:
+        Num+=1
+        plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)], "Age - Mass, dataset: Mass2>="+str(i)+", NS", str(Num)+"-AgeMassNSWeight",htmlFolderLocation)
+        Num+=1
+        plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)], "Age - Mass, dataset: Mass2>="+str(i)+", BH", str(Num)+"-AgeMassRBHWeight",htmlFolderLocation)
+        for j in [10,20,50,100]:
+            Num+=1
+            plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)], "Age - Mass, dataset: Mass2>="+str(i)+" Age<="+str(j)+", NS", str(Num)+"-AgeMassNSWeight",htmlFolderLocation)
+            Num+=1
+            plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)], "Age - Mass, dataset: Mass2>="+str(i)+" Age<="+str(j)+", BH", str(Num)+"-AgeMassRBHWeight",htmlFolderLocation)
+    Num+=1
+    plotSingleMassDonorLogPeriod(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"dataset: N>=10^-8 tbx>=10^-6d,NS",str(Num)+"-MasslgPeriodReasonableNSWeight",htmlFolderLocation)
+    Num+=1
+    plotSingleMassDonorLogPeriod(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"dataset: N>=10^-8 tbx>=10^-6d,BH",str(Num)+"-MasslgPeriodReasonableBHWeight",htmlFolderLocation)
+    for i in [2,5,10]:
+        for j in [10,15,20]:
+            for k in [1000,10000]:
+                Num+=1
+                plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "Age - Mass, dataset: Mass2>="+str(i)+" Age<="+str(j)+" Period<="+str(k)+", NS", str(Num)+"-AgeMassNSWeight",htmlFolderLocation)
+                Num+=1
+                plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "Age - Mass, dataset: Mass2>="+str(i)+" Age<="+str(j)+" Period<="+str(k)+", BH", str(Num)+"-AgeMassBHWeight",htmlFolderLocation)
+    
+    
+    
+    
+    
+    
+    # plotSingle(data["t1"], data["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data["ndt"], "Age - Mass, dataset: All", "1-AgeMassAllWeight",htmlFolderLocation)
+    # plotSingle(data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)]["t1"], data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)]["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)]["ndt"], "Age - Mass, dataset: N>=10^-8 tbx>=10^-6d", "2-AgeMassReasonableWeight",htmlFolderLocation)
+    
+    # plotSingle(data[(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"], data[(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["tbx"].apply(lambda x:math.log10(x)), 0, r"$\mathit{M_{donor}}$[${M_{sun}}$]", r"$\mathit{log P_{orb,cur}}$[d]", data[(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"], r"$\mathit{Mass - log(Period), dataset: All}$", "8-MasslgPeriodWeight",htmlFolderLocation)
+    # plotSingle(data[(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"], data[(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"],r"$\mathit{Age - Mass, dataset: NS}$", "4-AgeMassNSWeight",htmlFolderLocation)
+    # plotSingle(data[(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"], data[(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"], 0, r"$\mathit{Age}}$[Myrs]", r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"],r"$\mathit{Age - Mass, dataset: BH}$", "6-AgeMassBHWeight",htmlFolderLocation)
+    # # plotSingle(data[(data["mx2"]>=2)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=2)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]",data[(data["mx2"]>=i)&(data["kw"]==13)]["ndt"],r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
+    # # plotSingle(data[(data["mx2"]>=2)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=2)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=2)&(data["kw"]==13)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>=2${M_{sun}},NS$","AgeMassGT2WeightNS",htmlFolderLocation)
+    # # i=2
+    # # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==13)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==13)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
 
-    # for i in [2,5,10,20]:
-        # print(type(i))
-        # sys.exit(0)
-    i=2
-    plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
-    plotSingle(data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},BH$",str(i)+"AgeMassGT2WeightBH",htmlFolderLocation)
+    # # for i in [2,5,10,20]:
+    #     # print(type(i))
+    #     # sys.exit(0)
+    # i=2
+    # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},NS$",str(i)+"AgeMassGT2WeightNS",htmlFolderLocation)
+    # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]", data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)&(data["tbx"]>=0.00001)]["ndt"], r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},BH$",str(i)+"AgeMassGT2WeightBH",htmlFolderLocation)
     #     # 质量大于列表中的 Age - Mass, dataset: M2>2Msun     - Scatter fig
     #     # plotSingle(data[data["mx2"]>=i]["t1"],    data[data["mx2"]>=i]["mx2"],1,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]",0,r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}}$",    "AgeMassGT2Scatter",htmlFolderLocation)
     #     # 质量大于列表中的 Age - Mass, dataset: M2>2Msun     - Weight fig
@@ -105,8 +195,8 @@ def plotMain(data,htmlFolderLocation):
     #     plotSingle(data[(data["mx2"]>=i)&(data["kw"]==14)]["t1"],data[(data["mx2"]>=i)&(data["kw"]==14)]["mx2"],0,  r"$\mathit{Age}}$[Myrs]",   r"$\mathit{M_{d,ini}}$[${M_{sun}}$]",data[(data["mx2"]>=i)&(data["kw"]==14)]["ndt"],r"$\mathit{Age - Mass, dataset: M_{donor}}$>="+str(i)+"${M_{sun}},BH$",str(i)+"AgeMassGT2WeightBH",htmlFolderLocation)
     #     # j+=1
     #     # 质量大于列表中的 mx2-lg(tbx)关系
-    plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["mx2"], data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["tbx"].apply(lambda x:math.log10(x)),0,r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{log P_{orb,cur}}$[d]",data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["ndt"],r"$\mathit{Mass - log(Period), dataset: M_{donor}}$>="+str(i)+"${M_{sun}}$,NS",str(i)+"-MasslgPeriodMGTNS"+str(i)+"Weight",htmlFolderLocation)
-    plotSingle(data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["mx2"], data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["tbx"].apply(lambda x:math.log10(x)),0,r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{log P_{orb,cur}}$[d]",data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["ndt"],r"$\mathit{Mass - log(Period), dataset: M_{donor}}$>="+str(i)+"${M_{sun}}$,BH",str(i)+"-MasslgPeriodMGTBH"+str(i)+"Weight",htmlFolderLocation)
+    # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["mx2"], data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["tbx"].apply(lambda x:math.log10(x)),0,r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{log P_{orb,cur}}$[d]",data[(data["mx2"]>=i)&(data["kw"]==13)&(data["ndt"]>=0.00001)]["ndt"],r"$\mathit{Mass - log(Period), dataset: M_{donor}}$>="+str(i)+"${M_{sun}}$,NS",str(i)+"-MasslgPeriodMGTNS"+str(i)+"Weight",htmlFolderLocation)
+    # plotSingle(data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["mx2"], data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["tbx"].apply(lambda x:math.log10(x)),0,r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{log P_{orb,cur}}$[d]",data[(data["mx2"]>=i)&(data["kw"]==14)&(data["ndt"]>=0.00001)]["ndt"],r"$\mathit{Mass - log(Period), dataset: M_{donor}}$>="+str(i)+"${M_{sun}}$,BH",str(i)+"-MasslgPeriodMGTBH"+str(i)+"Weight",htmlFolderLocation)
         #     质量大于列表中,周期小于列表中的 mx2-lg(tbx)关系
 
     # for i in [2,5,10,20]:
