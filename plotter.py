@@ -11,16 +11,16 @@ import math
 import json
 
 #定义变量与参数
-dataRunTime="20230324_025538" # 10,000-20230324_020135 100,000-20230324_020205 1,000,000-20230324_020659 10,000,000-20230324_025538
+dataRunTime="20230324_020135" # 10,000-20230324_020135 100,000-20230324_020205 1,000,000-20230324_020659 10,000,000-20230324_025538
 eTimeEdgeList=[10,20,100,1000]
 ePeriodEdgeList=[0.0001,10,100,1000,10000]
 dataFolderLocation=functions.locationCheck(dataRunTime)
 htmlFolderLocation=dataFolderLocation+dataRunTime+"/"
-dataFileLocation=dataFolderLocation+"data/N"+dataRunTime+".csv"
+dataFileLocation=dataFolderLocation+"N"+dataRunTime+".csv"
 print(functions.nowtime()+str(dataRunTime)+" Stage 1.1: Loading data: All")
 dataAll=pd.read_csv(dataFileLocation,usecols=["i","t1","mx","mx2","tbx","kw","kw2","sepx","ndt"])
-totalFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"data/rdc.num | awk '{print $4}'"))
-effectiveFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"data/rdc.num | awk '{print $4-$9}'"))
+totalFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"rdc.num | awk '{print $4}'"))
+effectiveFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"rdc.num | awk '{print $4-$9}'"))
 htmlFileLocation=htmlFolderLocation+str(totalFormationCount)+"-"+dataRunTime+"-Analysis.html"
 dataZ=subprocess.getoutput("grep 'z =' "+dataFolderLocation+"popbin.f | awk '{print $NF}'")
 dataSFR=subprocess.getoutput("grep '^ *sfr' "+dataFolderLocation+"popbin.f | awk '{print $NF}'")

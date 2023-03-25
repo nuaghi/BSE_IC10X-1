@@ -47,16 +47,16 @@ def alter(file,old_str,new_str):
     os.rename(tempfile,file)
 
 def init():
-    if os.path.exists("/home/hp/Documents/BSE_fortran/data/"):
-        dataFolderLocation="/home/hp/Documents/BSE_fortran/data/"
+    if os.path.exists("/home/hp/Documents/git/data/"):
+        dataFolderLocation="/home/hp/Documents/git/data/"
         print(nowtime()+"OS: Ubuntu")
-    elif os.path.exists("/Users/nuaghi/Downloads/BSE/workbench/data/"):
-        dataFolderLocation="/Users/nuaghi/Downloads/BSE/workbench/data/"
+    elif os.path.exists("/Users/nuaghi/Documents/git/data/"):
+        dataFolderLocation="/Users/nuaghi/Documents/git/data/"
         print(nowtime()+"OS: MacOS")
     else:
         dataFolderLocation="./"
-        print(nowtime()+"OS: Unknown")
-
+        print(nowtime()+"FATAL ERROR: [OS: Unknown] Exit.")
+        exit(0)
     rdclogfile=dataFolderLocation+"rdc.num"
     if os.path.exists(rdclogfile):
         with open(rdclogfile, 'r', encoding='utf-8') as f:

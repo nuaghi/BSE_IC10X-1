@@ -36,19 +36,25 @@ def alter(file,old_str,new_str):
         f.write(file_data)
 
 def locationCheck(dataRunTime):
-    if os.path.exists("/home/hp/Documents/BSE_fortran/"):
-        dataFolderLocation="/home/hp/Documents/BSE_fortran/"
+    if os.path.exists("/home/hp/Documents/git/data/"):
+        dataFolderLocation="/home/hp/Documents/git/data/"
         print(nowtime()+"OS: Ubuntu")
-    elif os.path.exists("/Users/nuaghi/Downloads/BSE/workbench/"):
-        dataFolderLocation="/Users/nuaghi/Downloads/BSE/workbench/"
+    elif os.path.exists("/Users/nuaghi/Documents/git/data/"):
+        dataFolderLocation="/Users/nuaghi/Documents/git/data/"
         print(nowtime()+"OS: MacOS")
     else:
         dataFolderLocation="./"
-        print(nowtime()+"OS: Unknown")
+        print(nowtime()+"FATAL ERROR: [OS: Unknown] Exit.")
+        exit(0)
     htmlFolderLocation=dataFolderLocation+dataRunTime+"/"
-    if not os.path.exists(htmlFolderLocation):
-        os.mkdir(htmlFolderLocation)
-    return dataFolderLocation
+    dataFileLocation=dataFolderLocation+"N"+dataRunTime+".csv"
+    if not os.path.exists(dataFileLocation):
+        print(nowtime()+"FATAL ERROR: [File '"+dataFileLocation+"' Not Found.] Exit.")
+        exit(0)
+    else:
+        if not os.path.exists(htmlFolderLocation):
+            os.mkdir(htmlFolderLocation)
+        return dataFolderLocation
 
 plotFileNameList=[]
 def plotSingle(xdata,ydata,scale,xl,yl,weights2,ptitle,fname,htmlFolderLocation):
