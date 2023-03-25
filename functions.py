@@ -11,13 +11,15 @@ def nowtime():
 
 def onetwentieth(i):
     if int(i)>0:
-        j =  i//2000*100
+        j =  i*100//5000
         if j>=1000000:
             return 1000000
         elif j > 0:
             return j
         else:
             return 1
+    else:
+        return 1
 
 def alter(file,old_str,new_str):
     file_data = ""

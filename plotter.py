@@ -1,17 +1,11 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as pgo
 import subprocess
-from matplotlib.colors import LogNorm
+from alive_progress import alive_bar
 import functions
 import sys
-import math
-import json
 
 #定义变量与参数
-dataRunTime="20230324_020135" # 10,000-20230324_020135 100,000-20230324_020205 1,000,000-20230324_020659 10,000,000-20230324_025538
+dataRunTime="20230324_025538" # 10,000-20230324_013259 100,000-20230324_015309 1,000,000-20230324_015630 10,000,000-20230324_025538
 eTimeEdgeList=[10,20,100,1000]
 ePeriodEdgeList=[0.0001,10,100,1000,10000]
 dataFolderLocation=functions.locationCheck(dataRunTime)
@@ -28,71 +22,53 @@ print(functions.nowtime()+str(dataRunTime)+" Stage 1 running successfully: Initi
 
 def NumAnalytics(data):
     NumAnalyticsCount,k=[],0
-    for i in [13,14]:
-        for j in [7,8,9]:
-            NumAnalyticsCount.append([[],[]])
-            NumAnalyticsCount[k][0]=list(set(data[(data["kw"]==i)&(data["kw2"]==j)]["i"]))
-            NumAnalyticsCount[k][1]=list(data[(data["kw"]==i)&(data["kw2"]==j)]["ndt"])
-            print(functions.nowtime()+"NumAnalytics: "+str(i)+"-"+str(j))
-            k+=1
-    for i in range(0,len(NumAnalyticsCount)):
-        NumAnalyticsCount[i][0].sort()
-        NumAnalyticsCount[i][0]=len(NumAnalyticsCount[i][0])
-        NumAnalyticsCount[i][1]=sum(NumAnalyticsCount[i][1])
-    print(functions.nowtime()+"NumAnalytics: End")
+    with alive_bar(6, ctrl_c=False, title=f'NumAnalytics: ') as bar:
+        for i in [13,14]:
+            for j in [7,8,9]:
+                NumAnalyticsCount.append([[],[]])
+                NumAnalyticsCount[k][0]=list(set(data[(data["kw"]==i)&(data["kw2"]==j)]["i"]))
+                NumAnalyticsCount[k][1]=list(data[(data["kw"]==i)&(data["kw2"]==j)]["ndt"])
+                # print(functions.nowtime()+"NumAnalytics: "+str(i)+"-"+str(j))
+                NumAnalyticsCount[k][0].sort()
+                NumAnalyticsCount[k][0]=len(NumAnalyticsCount[k][0])
+                NumAnalyticsCount[k][1]=sum(NumAnalyticsCount[k][1])
+                k+=1
+                bar()
+    # for i in range(0,len(NumAnalyticsCount)):
+    #     NumAnalyticsCount[i][0].sort()
+    #     NumAnalyticsCount[i][0]=len(NumAnalyticsCount[i][0])
+    #     NumAnalyticsCount[i][1]=sum(NumAnalyticsCount[i][1])
+    # print(functions.nowtime()+"NumAnalytics: End")
     return NumAnalyticsCount
 
 def dataAnalytics(data):
     eTimeEdgeMyrsCount,ePeriodEdgeCount="",""
     for ageEdgeNum in range(0,len(eTimeEdgeList)):
-        eTimeEdgeMyrs=[[],[],[]]
-        eTimeEdgeMyrs[0]=list(set(data[data['t1']<=eTimeEdgeList[ageEdgeNum]]['i']))
-        eTimeEdgeMyrs[0].sort()
-        eTimeEdgeMyrs[2]=list(set(data[data['t1']>eTimeEdgeList[ageEdgeNum]]['i']))
-        eTimeEdgeMyrs[2].sort()
-        eTimeEdgeMyrsNumber=[len(eTimeEdgeMyrs[0]),len(eTimeEdgeMyrs[1]),len(eTimeEdgeMyrs[2])]
-        totalnum=len(eTimeEdgeMyrs[2])
-        otnum=functions.onetwentieth(totalnum)
-        for i in range(0,totalnum):
-            if eTimeEdgeMyrs[2][i] in eTimeEdgeMyrs[0]:
-                eTimeEdgeMyrsNumber[1]+=1
-                eTimeEdgeMyrsNumber[0]-=1
-                eTimeEdgeMyrsNumber[2]-=1
-                if i%otnum==0 or i%totalnum==0:
-                    print(functions.nowtime()+"Step1: Uniqueness the data file in Age Edge: "+str(eTimeEdgeList[ageEdgeNum])+" , List: "+str(eTimeEdgeMyrsNumber)+" , "+str(i)+"/"+str(totalnum)+", "+"percent: {:.2%}".format(i/totalnum))
+        eTimeEdgeMyrs=[list(set(data[data['t1']<=eTimeEdgeList[ageEdgeNum]]['i'])),list(set(data[data['t1']>eTimeEdgeList[ageEdgeNum]]['i']))]
+        eTimeEdgeMyrsNumber=[len(eTimeEdgeMyrs[0]),0,len(eTimeEdgeMyrs[1])]
+        totalnum=len(eTimeEdgeMyrs[1])
+        with alive_bar(totalnum, ctrl_c=False, title=f'Uniqueness the data file in Age Edge: {eTimeEdgeList[ageEdgeNum]}') as bar:
+            for i in range(0,totalnum):
+                if eTimeEdgeMyrs[1][i] in eTimeEdgeMyrs[0]:
+                    eTimeEdgeMyrsNumber[0]-=1
+                    eTimeEdgeMyrsNumber[1]+=1
+                    eTimeEdgeMyrsNumber[2]-=1
+                bar()
+        del eTimeEdgeMyrs
         eTimeEdgeMyrsCount+="Age < "+str(eTimeEdgeList[ageEdgeNum])+" Count: "+str(eTimeEdgeMyrsNumber[0])+" , Cross the edge: "+str(eTimeEdgeMyrsNumber[1])+" , > "+str(eTimeEdgeList[ageEdgeNum])+" : "+str(eTimeEdgeMyrsNumber[2])+"\n"
-        del eTimeEdgeMyrs
-    print(functions.nowtime())
-    for ageEdgeNum in range(0,len(eTimeEdgeList)):
-        eTimeEdgeMyrs=[[],[],[]]
-        eTimeEdgeMyrs[0]=list(set(data[data['tbx']<=eTimeEdgeList[ageEdgeNum]]['i']))
-        eTimeEdgeMyrs[0].sort()
-        eTimeEdgeMyrs[2]=list(set(data[data['tbx']>eTimeEdgeList[ageEdgeNum]]['i']))
-        eTimeEdgeMyrs[2].sort()
-        for i in eTimeEdgeMyrs[2]:
-            if i in eTimeEdgeMyrs[0]:
-                eTimeEdgeMyrs[1].append(i)
-                eTimeEdgeMyrs[0].remove(i)
-                eTimeEdgeMyrs[2].remove(i)
-        ePeriodEdgeCount+="Period < "+str(eTimeEdgeList[ageEdgeNum])+" Count: "+str(len(eTimeEdgeMyrs[0]))+" , Cross the edge: "+str(len(eTimeEdgeMyrs[1]))+" , > "+str(eTimeEdgeList[ageEdgeNum])+" : "+str(len(eTimeEdgeMyrs[2]))+"\n"
-        print(functions.nowtime()+"ePeriodEdge "+str(eTimeEdgeList[ageEdgeNum]))
-        del eTimeEdgeMyrs
-    print(eTimeEdgeMyrsCount,ePeriodEdgeCount)
-    sys.exit(0)
-    # for periodEdgeNum in range(0,len(ePeriodEdgeList)):
-    #     ePeriodEdge=[[],[],[]]
-    #     ePeriodEdge[0]=list(set(data[data['tbx']<=ePeriodEdgeList[periodEdgeNum]]['i']))
-    #     ePeriodEdge[0].sort()
-    #     ePeriodEdge[2]=list(set(data[data['tbx']>ePeriodEdgeList[periodEdgeNum]]['i']))
-    #     ePeriodEdge[2].sort()
-    #     for i in ePeriodEdge[2]:
-    #         if i in ePeriodEdge[0]:
-    #             ePeriodEdge[1].append(i)
-    #             ePeriodEdge[0].remove(i)
-    #             ePeriodEdge[2].remove(i)
-    #     ePeriodEdgeCount+="Period < "+str(ePeriodEdgeList[periodEdgeNum])+" Count: "+str(len(ePeriodEdge[0]))+" , Cross the edge: "+str(len(ePeriodEdge[1]))+" , > "+str(ePeriodEdgeList[periodEdgeNum])+" : "+str(len(ePeriodEdge[2]))+"\n"
-    #     print(functions.nowtime()+"ePeriodEdge "+str(ePeriodEdgeList[periodEdgeNum]))
-    #     del ePeriodEdge
+    for periodEdgeNum in range(0,len(ePeriodEdgeList)):
+        ePeriodEdge=[list(set(data[data['tbx']<=ePeriodEdgeList[periodEdgeNum]]['i'])),list(set(data[data['tbx']>ePeriodEdgeList[periodEdgeNum]]['i']))]
+        ePeriodEdgeMyrsNumber=[len(ePeriodEdge[0]),0,len(ePeriodEdge[1])]
+        totalnum=len(ePeriodEdge[1])
+        with alive_bar(totalnum, ctrl_c=False, title=f'Uniqueness the data file in Period Edge: {ePeriodEdgeList[periodEdgeNum]}') as bar:
+            for i in range(0,totalnum):
+                if ePeriodEdge[1][i] in ePeriodEdge[0]:
+                    ePeriodEdgeMyrsNumber[0]-=1
+                    ePeriodEdgeMyrsNumber[1]+=1
+                    ePeriodEdgeMyrsNumber[2]-=1
+                bar()
+        del ePeriodEdge
+        ePeriodEdgeCount+="Period < "+str(ePeriodEdgeList[periodEdgeNum])+" Count: "+str(ePeriodEdgeMyrsNumber[0])+" , Cross the edge: "+str(ePeriodEdgeMyrsNumber[1])+" , > "+str(ePeriodEdgeList[periodEdgeNum])+" : "+str(ePeriodEdgeMyrsNumber[2])+"\n"
     return eTimeEdgeMyrsCount,ePeriodEdgeCount,len(list(set(data['i'])))
 
 def ListAnalytics(data):
@@ -128,14 +104,14 @@ def ListAnalytics(data):
 
 def entrance():
     kwList=["中子星+主序星阶段裸露氦星","中子星+赫氏空隙裸露氦星","中子星+巨星支裸露氦星","黑洞+主序星阶段裸露氦星","黑洞+赫氏空隙裸露氦星","黑洞+巨星支裸露氦星"]
-    print(functions.nowtime()+str(dataRunTime)+" Stage 2.1: Entrance : All")
-    dataAllReturn=dataAnalytics(dataAll)
-    print(functions.nowtime()+str(dataRunTime)+" Stage 2.2: Entrance : NS")
-    dataNSReturn=dataAnalytics(dataAll[dataAll["kw"]==13])
-    print(functions.nowtime()+str(dataRunTime)+" Stage 2.3: Entrance : BH")
-    dataBHReturn=dataAnalytics(dataAll[dataAll["kw"]==14])
-    print(functions.nowtime()+str(dataRunTime)+" Stage 3.1: NumAnalytics")
-    dataNakeHeStarCount=NumAnalytics(dataAll)
+    # print(functions.nowtime()+str(dataRunTime)+" Stage 2.1: Entrance : All")
+    # dataAllReturn=dataAnalytics(dataAll)
+    # print(functions.nowtime()+str(dataRunTime)+" Stage 2.2: Entrance : NS")
+    # dataNSReturn=dataAnalytics(dataAll[dataAll["kw"]==13])
+    # print(functions.nowtime()+str(dataRunTime)+" Stage 2.3: Entrance : BH")
+    # dataBHReturn=dataAnalytics(dataAll[dataAll["kw"]==14])
+    # print(functions.nowtime()+str(dataRunTime)+" Stage 3.1: NumAnalytics")
+    # dataNakeHeStarCount=NumAnalytics(dataAll)
     plotFileNameList=functions.plotMain(dataAll,htmlFolderLocation)
     print(functions.nowtime()+str(dataRunTime)+" Stage 3.2: Summarizing")
     with open(htmlFileLocation, 'w') as f:
