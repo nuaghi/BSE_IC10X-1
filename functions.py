@@ -5,7 +5,9 @@ import math
 import datetime
 import subprocess
 import sys
+import numpy as np
 import gc
+from matplotlib import colors
 
 def nowtime():
     return datetime.datetime.now().strftime('%m%d-%H%M%S ')
@@ -48,21 +50,29 @@ def locationCheck(dataRunTime):
     else:
         dataFolderLocation="./"
         print(nowtime()+"FATAL ERROR: [OS: Unknown] Exit.")
-        exit(0)
-    htmlFolderLocation=dataFolderLocation+dataRunTime+"/"
+        exit(1)
+    try:
+        # print("grep "+dataRunTime+" "+dataFolderLocation+"rdc.num | awk '{print $4}'")
+        # exit(0)
+        totalFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"rdc.num | awk '{print $4}'"))
+        if totalFormationCount > 0:
+            htmlFolderLocation=dataFolderLocation+dataRunTime+"_"+str(totalFormationCount)+"/"
+        else:
+            htmlFolderLocation=dataFolderLocation+dataRunTime+"/"
+    except (NameError, IndexError) as e:
+        print("Error content: ", e)
+        exit(1)
+
+    os.system("cp "+dataFolderLocation+"/jquery.js "+htmlFolderLocation)
     dataFileLocation=dataFolderLocation+"N"+dataRunTime+".csv"
     if not os.path.exists(dataFileLocation):
         print(nowtime()+"FATAL ERROR: [File '"+dataFileLocation+"' Not Found.] Exit.")
-        exit(0)
-    else:
-# totalFormationCount=int(subprocess.getoutput("grep "+dataRunTime+" "+dataFolderLocation+"rdc.num | awk '{print $4}'"))
-# if totalFormationCount > 0:
-#     htmlFolderLocation=dataFolderLocation+dataRunTime+"_"+str(totalFormationCount)+"/"
-# else:
-#     htmlFolderLocation=dataFolderLocation+dataRunTime+"/"
-        if not os.path.exists(htmlFolderLocation):
-            os.mkdir(htmlFolderLocation)
-        return dataFolderLocation
+        exit(1)
+    elif not os.path.exists(htmlFolderLocation):
+        os.mkdir(htmlFolderLocation)
+    del dataRunTime,totalFormationCount,htmlFolderLocation,dataFileLocation
+    gc.collect()
+    return dataFolderLocation
 
 plotFileNameList=[]
 def plotSingle(xdata,ydata,scale,xl,yl,wei,ptitle,fname,htmlFolderLocation):
@@ -82,10 +92,13 @@ def plotSingle(xdata,ydata,scale,xl,yl,wei,ptitle,fname,htmlFolderLocation):
 def plotSingleAgeMassDonor(data,ptitle,fname,htmlFolderLocation):
     dataLength=len(data)
     if dataLength > 0:
-        plt.hist2d(data["t1"],data["mx2"],bins=25,density=50,weights=data["ndt"],norm=LogNorm())
-        plt.colorbar()
-        plt.xlabel(r"$\mathit{Age}}$[Myrs]")
-        plt.ylabel(r"$\mathit{M_{d,ini}}$[${M_{sun}}$]")
+        fig, ax = plt.subplots()
+        cmap = plt.cm.get_cmap('viridis')
+        cmap.set_under(color='white')
+        hist = ax.hist2d(data["t1"],data["mx2"],bins=50, weights=data["ndt"],norm=None, cmap=cmap)
+        cb = fig.colorbar(hist[3], ax=ax)
+        cb.ax.set_ylabel('N')
+        hist[3].set_clim(0.0001, np.max(hist[0]))
         lenListSetDataI=len(list(set(data["i"])))
         DataNdt=list(data["ndt"])
         listDataNdt=[sum(DataNdt),min(DataNdt),max(DataNdt)]
@@ -95,6 +108,8 @@ def plotSingleAgeMassDonor(data,ptitle,fname,htmlFolderLocation):
         plt.close()
         plotFileNameList.append(fname)
         print(nowtime()+"Plot: "+fname)
+        del cmap,fig,ax,cb,hist
+        gc.collect
     else:
         print(nowtime()+"[WARNING] Empty Data: "+fname)
         plt.hist2d([0],[0],bins=25,density=50,weights=[1],norm=LogNorm())
@@ -160,44 +175,48 @@ def plotMain(data,htmlFolderLocation):
     data=data[data["tbx"]>0]
     Num=1
     plotSingleAgeMassDonor(data, "All", str(Num)+"-AgeMassAllWeight",htmlFolderLocation)
-    Num+=1
-    plotSingleAgeMassDonor(data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8,tbx>=10^-6d", str(Num)+"-AgeMassReasonableAll",htmlFolderLocation)
-    Num+=1
-    plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8 tbx>=10^-6d,NS", str(Num)+"-AgeMassReasonableNS",htmlFolderLocation)
-    Num+=1
-    plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8 tbx>=10^-6d,BH", str(Num)+"-AgeMassReasonableRBH",htmlFolderLocation)
-    for i in [2,5,10]:
-        Num+=1
-        plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)], "Mass2>="+str(i)+",NS", str(Num)+"-AgeMassNS",htmlFolderLocation)
-        Num+=1
-        plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)], "Mass2>="+str(i)+",BH", str(Num)+"-AgeMassBH",htmlFolderLocation)
-        for j in [10,20,50,100]:
-            Num+=1
-            plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)], "Mass2>="+str(i)+",Age<="+str(j)+",NS", str(Num)+"-AgeMassNS",htmlFolderLocation)
-            Num+=1
-            plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)], "Mass2>="+str(i)+",Age<="+str(j)+",BH", str(Num)+"-AgeMassBH",htmlFolderLocation)
-    Num+=1
-    plotSingleMassDonorLogPeriod(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"N>=10^-8,tbx>=10^-6d,NS",str(Num)+"-Mass2lgPeriodReasonableNS",htmlFolderLocation)
-    Num+=1
-    plotSingleMassDonorLogPeriod(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"N>=10^-8,tbx>=10^-6d,BH",str(Num)+"-Mass2lgPeriodReasonableBH",htmlFolderLocation)
-    for i in [2,5,10]:
-        for j in [10,15,20]:
-            for k in [1000,10000]:
-                Num+=1
-                plotSingleMassDonorLogPeriod(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "M2>="+str(i)+",Age<="+str(j)+",Period<="+str(k)+", NS", str(Num)+"-Mass2lgPeriodNS",htmlFolderLocation)
-                Num+=1
-                plotSingleMassDonorLogPeriod(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "M2>="+str(i)+",Age<="+str(j)+",Period<="+str(k)+", BH", str(Num)+"-Mass2lgPeriodBH",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["mx2"],data["ndt"],(2,60),str(Num)+"-Mass_donor_N2-60",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["mx2"],data["ndt"],(5,50),str(Num)+"-Mass_donor_N5-50",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(0,4),str(Num)+"-log(Period)_N0-4",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(0,3),str(Num)+"-log(Period)_N0-3",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(0,2),str(Num)+"-log(Period)_N0-2",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
-    Num+=1
-    plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(0,1),str(Num)+"-log(Period)_N0-1",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotSingleAgeMassDonor(data[(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8,tbx>=10^-6d", str(Num)+"-AgeMassReasonableAll",htmlFolderLocation)
+    # Num+=1
+    # plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8 tbx>=10^-6d,NS", str(Num)+"-AgeMassReasonableNS",htmlFolderLocation)
+    # Num+=1
+    # plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)], "N>=10^-8 tbx>=10^-6d,BH", str(Num)+"-AgeMassReasonableRBH",htmlFolderLocation)
+    # for i in [2,5,10]:
+    #     Num+=1
+    #     plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)], "Mass2>="+str(i)+",NS", str(Num)+"-AgeMass2GT"+str(i)+"NS",htmlFolderLocation)
+    #     Num+=1
+    #     plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)], "Mass2>="+str(i)+",BH", str(Num)+"-AgeMass2GT"+str(i)+"BH",htmlFolderLocation)
+    #     for j in [10,20,50,100]:
+    #         Num+=1
+    #         plotSingleAgeMassDonor(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)], "Mass2>="+str(i)+",Age<="+str(j)+",NS", str(Num)+"-AgeLT"+str(j)+"Mass2GT"+str(i)+"NS",htmlFolderLocation)
+    #         Num+=1
+    #         plotSingleAgeMassDonor(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)], "Mass2>="+str(i)+",Age<="+str(j)+",BH", str(Num)+"-AgeLT"+str(j)+"Mass2GT"+str(i)+"BH",htmlFolderLocation)
+    # Num+=1
+    # plotSingleMassDonorLogPeriod(data[(data["kw"]==13)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"N>=10^-8,tbx>=10^-6d,NS",str(Num)+"-Mass2lgPeriodReasonableNS",htmlFolderLocation)
+    # Num+=1
+    # plotSingleMassDonorLogPeriod(data[(data["kw"]==14)&(data["ndt"]>=0.00000001)&(data["tbx"]>=0.000001)],"N>=10^-8,tbx>=10^-6d,BH",str(Num)+"-Mass2lgPeriodReasonableBH",htmlFolderLocation)
+    # for i in [2,5,10]:
+    #     for j in [10,15,20]:
+    #         for k in [1000,10000]:
+    #             Num+=1
+    #             plotSingleMassDonorLogPeriod(data[(data["kw"]==13)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "M2>="+str(i)+",Age<="+str(j)+",Period<="+str(k)+", NS", str(Num)+"-Mass2GT"+str(i)+"AgeLT"+str(j)+"lgPeriodLT"+str(k)+"NS",htmlFolderLocation)
+    #             Num+=1
+    #             plotSingleMassDonorLogPeriod(data[(data["kw"]==14)&(data["mx2"]>=i)&(data["t1"]<=j)&(data["tbx"]<=k)], "M2>="+str(i)+",Age<="+str(j)+",Period<="+str(k)+", BH", str(Num)+"-Mass2GT"+str(i)+"AgeLT"+str(j)+"lgPeriodLT"+str(k)+"BH",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["mx2"],data["ndt"],(0,100),str(Num)+"-Mass_donor_N0-100",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["mx2"],data["ndt"],(0,40),str(Num)+"-Mass_donor_N0-40",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["mx2"],data["ndt"],(0,20),str(Num)+"-Mass_donor_N0-50",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["mx2"],data["ndt"],(0,10),str(Num)+"-Mass_donor_N0-10",r"$\mathit{M_{donor}}$[${M_{sun}}$]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(-4,5),str(Num)+"-log(Period)_N-4-5",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(-2,4),str(Num)+"-log(Period)_N-2-4",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(0,3),str(Num)+"-log(Period)_N0-3",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
+    # Num+=1
+    # plotDistribution(data["tbx"].apply(lambda x:math.log10(x)),data["ndt"],(1,3),str(Num)+"-log(Period)_N1-3",r"$\mathit{log P_{orb,cur}}$[d]",r"$\mathit{N}$]",htmlFolderLocation)
     return plotFileNameList
 
