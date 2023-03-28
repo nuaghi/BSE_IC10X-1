@@ -2,6 +2,7 @@ import os
 import datetime
 import subprocess
 import sys
+import pandas as pd
 
 def nowtime():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S ')
@@ -46,6 +47,39 @@ def alter(file,old_str,new_str):
                 continue
     os.rename(tempfile,file)
 
+def alterAll(file,old_str,new_str):
+    file_data = ""
+    tempfile=file+".tmp"
+    smallFileName=str(file).replace("all.csv",".csv")
+    sFI=list(set(pd.read_csv(smallFileName)["i"]))
+    sFI.sort()
+    totalnum=int(subprocess.getoutput("wc -l %s | awk '{print $1}'" % file))
+    otnum=onetwentieth(totalnum)
+    i=0
+    with open(file, "r", encoding="utf-8") as f:
+        for line in f:
+            i+=1
+            # print(i,line)
+            if old_str in line:
+                if i == 1:
+                    file_data += line
+                else:
+                    line = line.replace(old_str,new_str)
+                    if int(line.split(",")[0].strip()) in sFI:
+                        file_data += line
+            else:
+                print(nowtime()+"Warning data: "+str(i)+" - "+line)
+                file_data += line
+            if i%otnum==0 or i%totalnum==0:
+                print(nowtime()+"Trim blank of file: "+file+": "+str(i)+"/"+str(totalnum)+", "+"percent: {:.2%}".format(i/totalnum))
+                if len(file_data) > 0:
+                    with open(tempfile,"a",encoding="utf-8") as f:
+                        f.write(file_data)
+                else:
+                    print(nowtime()+"ERROR: Empty Data")
+                file_data = ""
+    os.rename(tempfile,file)
+
 def init():
     if os.path.exists("/home/hp/Documents/git/data/"):
         dataFolderLocation="/home/hp/Documents/git/data/"
@@ -63,6 +97,7 @@ def init():
             last_line = f.readlines()[-1]
             runtime=last_line.split('|')[0].strip()
         alter(dataFolderLocation+"N"+runtime+".csv", " ", "")
+        alterAll(dataFolderLocation+"N"+runtime+"all.csv", " ", "")
     else:
         print("ERROR: File Not Found!!!")
         sys.exit(0)

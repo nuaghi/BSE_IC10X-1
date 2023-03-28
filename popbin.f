@@ -50,12 +50,14 @@
       read(detime(1),*)cdetime
       read(detime(2),*)ddetime
       stime=cdetime//"_"//ddetime
+      OPEN(103,file='../data/N'//stime//'all.csv',status='unknown')
       OPEN(104,file='../data/N'//stime//'.csv',status='unknown')
       OPEN(105,file='../data/records.dat',status='old',
      &POSITION='append')
       OPEN(106,file='../data/rdc.num',status='unknown',
      &POSITION='append')
       write(104,*)'i,t1,mx,mx2,tbx,kw,kw2,sepx,ndt,'
+      write(103,*)'i,t1,mx,mx2,tbx,kw,kw2,sepx,ecc,ndt,'
       do i = 1,nm1
             if(MOD(i,1000).eq.0.0) print*,i
             call random_number(r0)
@@ -127,19 +129,32 @@
                   mv0(kk+1) = MV 
                   MBOL0(kk+1) = 4.75D0 - 2.5D0*LOGL
             enddo
+            t1 = bcm(jj,1)
+            mx = bcm(jj,4)
+            mx2 = bcm(jj,18)
+            tbx = bcm(jj,30)
+            sepx = bcm(jj,31)
+            ndt = ri*1.0d6*(bcm(jj,1) - bcm(jj-1,1))
+c            dtt = ri*dtt
+            ecc = bcm(jj,32)
             if((kw.eq.13.and.kw2.eq.7).or.(kw.eq.14.and.kw2
      &.eq.7).or.(kw.eq.13.and.kw2.eq.8).or.(kw.eq.14.and.kw2.eq.8).or
      &.(kw.eq.13.and.kw2.eq.9).or.(kw.eq.14.and.kw2.eq.9))then
-                  t1 = bcm(jj,1)
-                  mx = bcm(jj,4)
-                  mx2 = bcm(jj,18)
-                  tbx = bcm(jj,30)
-                  sepx = bcm(jj,31)
-                  dtt = 1.0d6*(bcm(jj,1) - bcm(jj-1,1))
-                  ndt = ri*dtt
+c                  t1 = bcm(jj,1)
+c                  mx = bcm(jj,4)
+c                  mx2 = bcm(jj,18)
+c                  tbx = bcm(jj,30)
+c                  sepx = bcm(jj,31)
+c                  dtt = 1.0d6*(bcm(jj,1) - bcm(jj-1,1))
+c                  ndt = ri*dtt
                   WRITE(104,*)i,",",t1,",",mx,",",mx2,",",tbx,",",kw,
      &",",kw2,",",sepx,",",ndt
            endif
+c            if((ecc.ge.0).and.(ndt.
+c     &gt.0))then
+                  WRITE(103,*)i,",",t1,",",mx,",",mx2,",",tbx,",",kw,
+     &",",kw2,",",sepx,",",bcm(jj,32),",",ndt
+c            endif
          goto 30
  40      continue
       enddo
