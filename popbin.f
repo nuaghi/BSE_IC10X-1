@@ -1,19 +1,20 @@
       PROGRAM popbin
       implicit none
       INCLUDE 'const_bse.h'
-      integer i,j,k,jj,nm1,Kstage,kk,unevl,ii
+      integer i,j,k,jj,nm1,Kstage,kk,unevl,ii,ist,istt,ist1
       integer kw,kw2,kwx,kwx2,kstar(2),kwx1,kwx11,kwx22
       integer i1,i2,kdum,tnum,dtime(8)
       character*8 detime(3),cdetime
       character*6 ddetime
       character*15 stime
+      character*180 tmptxt(20000)
       real*8 Rsun,CG,sep,Mtotal,spin,mx11,mx22,sfr,ri,ndt
       real*8 m1,m2,tmax,radius,twopi,radius2,spin2,arr(8),perd
       real*8 mass0(2),mass(2),z,zpars(20),ospbru(50000),omega(50000)
       real*8 ospbru2(50000),omega2(50000),MBOL0(2),mv0(2),sepx
       real*8 epoch(2),tms(2),tphys,tphysf,dtp,pi,a,b,c,lm1,lm2,lsep
       real*8 rad(2),lum(2),ospin(2),LOGL, LOGT, MASS00,MV,BMINV,UMINB
-      real*8 massc(2),radc(2),menv(2),renv(2),r0,alpha,rd,dtt
+      real*8 massc(2),radc(2),menv(2),renv(2),r0,alpha,rd
       real*8 sep0,tb0,tb,ecc0,ecc,aursun,yeardy,yearsc,tol,z0
       PARAMETER(aursun=214.95d0,yeardy=365.25d0,yearsc=3.1557d+07)
       PARAMETER(tol=1.d-07)
@@ -42,22 +43,19 @@
       SNtype = 2.0
       idum = 3234
       unevl = 0
+      tmptxt = ""
       if(idum.gt.0) idum = -idum
       CALL mvdata
       CALL instar
-      nm1 = 1.0d3
+      nm1 = 1.0d4
       call date_and_time(detime(1), detime(2), detime(3), dtime)
       read(detime(1),*)cdetime
       read(detime(2),*)ddetime
       stime=cdetime//"_"//ddetime
-      OPEN(103,file='../data/N'//stime//'all.csv',status='unknown')
       OPEN(104,file='../data/N'//stime//'.csv',status='unknown')
-      OPEN(105,file='../data/records.dat',status='old',
-     &POSITION='append')
       OPEN(106,file='../data/rdc.num',status='unknown',
      &POSITION='append')
       write(104,*)'i,t1,mx,mx2,tbx,kw,kw2,sepx,ndt,'
-      write(103,*)'i,t1,mx,mx2,tbx,kw,kw2,sepx,ecc,ndt,'
       do i = 1,nm1
             if(MOD(i,1000).eq.0.0) print*,i
             call random_number(r0)
@@ -78,6 +76,7 @@
             ecc = 0.0
             z = 0.004
             sfr=0.5
+            ist = -1
             ri=sfr*m2*0.15571*0.12328*2.995*5.604*8.1116/nm1/M1**2.7
             if(m1.le.m2)then
                   unevl=unevl+1
@@ -106,18 +105,17 @@
             tphys = 0.0
             tphysf = 10000
             dtp = 0.0
-
-      WRITE(105,*)stime,",",i,",",mass0,",",tb0,",",sepx
             CALL evolv2(kstar,mass0,mass,rad,lum,massc,radc,
      &menv,renv,ospin,epoch,tms,
      &tphys,tphysf,dtp,z,zpars,tb,ecc)
-
             jj = 0
             t1 = -1.0
             t2 = -1.0
             t3 = -1.0
  30         jj = jj + 1
-            if(bcm(jj,1).lt.0.0) goto 40
+            if((bcm(jj,1).lt.0.0).or.((ist.eq.-1).and.(istt.eq.1)))then
+                  goto 40
+            endif
             kw = INT(bcm(jj,2))
             kw2 = INT(bcm(jj,16))
             bcm(jj,30) = yeardy*bcm(jj,30)
@@ -126,7 +124,7 @@
                   LOGT = bcm(jj,7+14*kk)
                   MASS00 = bcm(jj,4+14*kk)
                   CALL LT2UBV(LOGL,LOGT,MASS00,MV,BMINV,UMINB)
-                  mv0(kk+1) = MV 
+                  mv0(kk+1) = MV
                   MBOL0(kk+1) = 4.75D0 - 2.5D0*LOGL
             enddo
             t1 = bcm(jj,1)
@@ -135,31 +133,38 @@
             tbx = bcm(jj,30)
             sepx = bcm(jj,31)
             ndt = ri*1.0d6*(bcm(jj,1) - bcm(jj-1,1))
-c            dtt = ri*dtt
             ecc = bcm(jj,32)
             if((kw.eq.13.and.kw2.eq.7).or.(kw.eq.14.and.kw2
      &.eq.7).or.(kw.eq.13.and.kw2.eq.8).or.(kw.eq.14.and.kw2.eq.8).or
      &.(kw.eq.13.and.kw2.eq.9).or.(kw.eq.14.and.kw2.eq.9))then
-c                  t1 = bcm(jj,1)
-c                  mx = bcm(jj,4)
-c                  mx2 = bcm(jj,18)
-c                  tbx = bcm(jj,30)
-c                  sepx = bcm(jj,31)
-c                  dtt = 1.0d6*(bcm(jj,1) - bcm(jj-1,1))
-c                  ndt = ri*dtt
-                  WRITE(104,*)i,",",t1,",",mx,",",mx2,",",tbx,",",kw,
-     &",",kw2,",",sepx,",",ndt
-           endif
-c            if((ecc.ge.0).and.(ndt.
-c     &gt.0))then
-                  WRITE(103,*)i,",",t1,",",mx,",",mx2,",",tbx,",",kw,
-     &",",kw2,",",sepx,",",bcm(jj,32),",",ndt
-c            endif
-         goto 30
- 40      continue
+                  ist = 1
+                  istt = 1
+            endif
+            write(tmptxt(jj),111)i,t1,mx,mx2,tbx,kw,kw2,sepx,ecc,ndt
+      goto 30
+ 40   if(ist.eq.1)then
+            do ist1 = 1,20000
+                  if(LEN_TRIM(tmptxt(ist1)) > 0)then
+                        write(104,*)tmptxt(ist1)
+                        tmptxt(ist1) = ""
+                  endif
+            enddo
+      else
+            do ist1 = 1,20000
+                  if(LEN_TRIM(tmptxt(ist1)) > 0)then
+                        tmptxt(ist1) = ""
+                  endif
+            enddo
+      endif
+      ist = -1
+      istt = -1
+      continue
       enddo
       WRITE(106,*)cdetime//"_"//ddetime,"| Total Number: ",nm1,
      &", Unenvolved binary numbers:",unevl
+
+ 111  FORMAT(i9,",",F22.16,",",F20.16,",",F20.16,",",F20.10,",",i2
+     &,",",i2,",",F23.16,",",F15.8,",",F23.16)
       STOP
       END
 
