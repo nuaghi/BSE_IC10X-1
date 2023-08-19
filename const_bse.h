@@ -11,10 +11,11 @@
       COMMON /FLAGS/ ceflag,tflag,ifflag,nsflag,wdflag
       INTEGER bhflag
 *
-      REAL*8 neta,bwind,hewind,mxns,alpha1,lambda,SNtype
+      REAL*8 neta,bwind,hewind,mxns
+      REAL*8 alpha1,alpha3,alpha5,lambda,SNtype
       REAL*8 sigma,beta,xi,acc2,epsnov,eddfac,gamma
       COMMON /VALUE1/ neta,bwind,hewind,mxns,SNtype
-      COMMON /VALUE2/ alpha1,lambda
+      COMMON /VALUE2/ alpha1,alpha3,alpha5,lambda
       COMMON /VALUE4/ sigma,bhflag
       COMMON /VALUE5/ beta,xi,acc2,epsnov,eddfac,gamma
       REAL*8 pts1,pts2,pts3

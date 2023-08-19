@@ -18,7 +18,7 @@ sse:    $(OBJT1) $(LFLAGS)
 SRCE2 = \
 bse.f comenv.f corerd.f deltat.f dgcore.f evolv2.f gntage.f \
 hrdiag.f instar.f kick.f mix.f mlwind.f mrenv.f ran3.f rl.f \
-star.f zcnsts.f zfuncs.f
+star.f zcnsts.f zfuncs.f evolv23.f comenv3.f evolv25.f comenv5.f
  
 OBJT2 = $(SRCE2:.f=.o)
 
@@ -28,8 +28,8 @@ bse:    $(OBJT2) $(LFLAGS)
 SRCE3 = \
 popbin.f comenv.f corerd.f deltat.f dgcore.f evolv2.f gntage.f \
 hrdiag.f instar.f kick.f mix.f mlwind.f mrenv.f ran3.f rl.f \
-star.f zcnsts.f zfuncs.f
- 
+star.f zcnsts.f zfuncs.f evolv23.f comenv3.f evolv25.f comenv5.f
+
 OBJT3 = $(SRCE3:.f=.o)
 
 popbin: $(OBJT3) $(LFLAGS)

@@ -1,5 +1,5 @@
 ***
-      SUBROUTINE COMENV(M01,M1,MC1,AJ1,JSPIN1,KW1,
+      SUBROUTINE COMENV5(M01,M1,MC1,AJ1,JSPIN1,KW1,
      &                  M02,M2,MC2,AJ2,JSPIN2,KW2,
      &                  ZPARS,ECC,SEP,JORB,COEL,z)
 *
@@ -29,17 +29,17 @@
       REAL*8 ECC,SEP,JORB,TB,OORB,OSPIN1,OSPIN2,TWOPI
       REAL*8 RC1,RC2,Q1,Q2,RL1,RL2,LAMB1,LAMB2
       REAL*8 MENV,RENV,MENVD,RZAMS,VS(3)
-      REAL*8 AURSUN,K3,ALPHA1,LAMBDA,LAMBDA1,LAMBDA2,LAMBDA3,sss
+      REAL*8 AURSUN,K3,ALPHA5,LAMBDA,LAMBDA1,LAMBDA2,LAMBDA3,sss
       REAL*8 R11(2000),lg1(2000),lb1(2000)
       REAL*8 R12(2000),lg2(2000),lb2(2000),R13(2000),lg3(2000),lb3(2000)
       PARAMETER (AURSUN = 214.95D0,K3 = 0.21D0) 
-      COMMON /VALUE2/ ALPHA1,LAMBDA
+      COMMON /VALUE2/ ALPHA5,LAMBDA
       LOGICAL COEL
       REAL bcm(50000,34),bpp(80,10)
       COMMON /BINARY/ bcm,bpp
       REAL*8 CELAMF,RL,RZAMSF
       EXTERNAL CELAMF,RL,RZAMSF
-      alpha1 = 1.0
+      alpha5 = 5.0
 *
 * Common envelope evolution - entered only when KW1 = 2, 3, 4, 5, 6, 8 or 9.
 *
@@ -344,7 +344,7 @@ c         LAMB2 = CELAMF(KW,M02,L2,R2,RZAMS,MENVD,LAMBDA)
 *
 * Calculate the final orbital energy without coalescence.
 *
-      EORBF = EORBI + EBINDI/ALPHA1
+      EORBF = EORBI + EBINDI/ALPHA5
 *
 * If the secondary is on the main sequence see if it fills its Roche lobe.
 *
@@ -378,7 +378,7 @@ c         LAMB2 = CELAMF(KW,M02,L2,R2,RZAMS,MENVD,LAMBDA)
 * Coalescence - calculate final binding energy.
 *
             EORBF = MAX(MC1*M2/(2.D0*SEPL),EORBI)
-            EBINDF = EBINDI - ALPHA1*(EORBF - EORBI)
+            EBINDF = EBINDI - ALPHA5*(EORBF - EORBI)
          ELSE
 *
 * Primary becomes a black hole, neutron star, white dwarf or helium star.
@@ -441,7 +441,7 @@ c         LAMB2 = CELAMF(KW,M02,L2,R2,RZAMS,MENVD,LAMBDA)
 * Calculate the final envelope binding energy.
 *
             EORBF = MAX(MC1*MC2/(2.D0*SEPL),EORBI)
-            EBINDF = EBINDI - ALPHA1*(EORBF - EORBI)
+            EBINDF = EBINDI - ALPHA5*(EORBF - EORBI)
 *
 * Check if we have the merging of two degenerate cores and if so
 * then see if the resulting core will survive or change form.

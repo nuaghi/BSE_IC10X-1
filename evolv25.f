@@ -1,5 +1,5 @@
 ***
-      SUBROUTINE evolv2(kstar,mass0,mass,rad,lumin,massc,radc,
+      SUBROUTINE evolv25(kstar,mass0,mass,rad,lumin,massc,radc,
      &                  menv,renv,ospin,epoch,tms,
      &                  tphys,tphysf,dtp,z,zpars,tb,ecc)
       implicit none
@@ -1429,7 +1429,7 @@ c      print*,tb*yeardy,porbup,porblow,mass(j2)
          ces = ces + 1
          m1ce = mass(j1)
          m2ce = mass(j2)
-         CALL comenv(mass0(j1),mass(j1),massc(j1),aj(j1),jspin(j1),
+         CALL comenv5(mass0(j1),mass(j1),massc(j1),aj(j1),jspin(j1),
      &               kstar(j1),mass0(j2),mass(j2),massc(j2),aj(j2),
      &               jspin(j2),kstar(j2),zpars,ecc,sep,jorb,coel,z)
 *
@@ -2325,13 +2325,13 @@ c         endif
 *
       if(kstar(j1).ge.2.and.kstar(j1).le.9.and.kstar(j1).ne.7)then
          ces = ces + 1
-         CALL comenv(mass0(j1),mass(j1),massc(j1),aj(j1),jspin(j1),
+         CALL comenv5(mass0(j1),mass(j1),massc(j1),aj(j1),jspin(j1),
      &               kstar(j1),mass0(j2),mass(j2),massc(j2),aj(j2),
      &               jspin(j2),kstar(j2),zpars,ecc,sep,jorb,coel,z)
          com = .true.
       elseif(kstar(j2).ge.2.and.kstar(j2).le.9.and.kstar(j2).ne.7)then
          ces = ces + 1
-         CALL comenv(mass0(j2),mass(j2),massc(j2),aj(j2),jspin(j2),
+         CALL comenv5(mass0(j2),mass(j2),massc(j2),aj(j2),jspin(j2),
      &               kstar(j2),mass0(j1),mass(j1),massc(j1),aj(j1),
      &               jspin(j1),kstar(j1),zpars,ecc,sep,jorb,coel,z)
          com = .true.
